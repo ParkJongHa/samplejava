@@ -1,4 +1,4 @@
-package backjoon.demo00001_70_20057_wizard_shark_and_tornado;
+package algorithm.baekjoon.demo02_ss.demo00001_70_20057_wizard_shark_and_tornado;
 
 import java.awt.*;
 import java.util.ArrayList;

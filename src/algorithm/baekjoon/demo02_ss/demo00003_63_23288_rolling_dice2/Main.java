@@ -1,4 +1,4 @@
-package backjoon.demo00003_63_23288_rolling_dice2;
+package algorithm.baekjoon.demo02_ss.demo00003_63_23288_rolling_dice2;
 
 import java.util.Scanner;
 
