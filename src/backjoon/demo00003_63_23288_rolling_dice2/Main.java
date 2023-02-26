@@ -272,6 +272,7 @@ A = B인 경우 이동 방향에 변화는 없다
             mapNo = getMapNo(map, dice);
 
             //            dice.
+
         }
 //
 //        return 0;
