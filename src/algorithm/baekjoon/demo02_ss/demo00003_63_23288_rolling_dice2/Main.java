@@ -1,6 +1,8 @@
 package algorithm.baekjoon.demo02_ss.demo00003_63_23288_rolling_dice2;
 
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /*
 https://www.acmicpc.net/problem/23288
@@ -19,13 +21,21 @@ public class Main {
         int currentRow = 1;
         int currentCol = 1;
 
+        public int getRowOnMap() {
+            return currentRow - 1;
+        }
+
+        public int getColOnMap() {
+            return currentCol - 1;
+        }
+
         public Direction direction = Direction.East; // 가장 처음에 주사위의 이동 방향은 동쪽
 
-        public void changeToTheOpositeDirection() {
-            if (Direction.East == direction) direction = Direction.West;
-            else if (Direction.West == direction) direction = Direction.East;
-            else if (Direction.South == direction) direction = Direction.North;
-            else direction = Direction.South;
+        public Direction getOpositeDirection() {
+            if (Direction.East == direction) return Direction.West;
+            else if (Direction.West == direction) return Direction.East;
+            else if (Direction.South == direction) return Direction.North;
+            else return Direction.South;
         }
 
         public void changeDirection(int B_mapNo) {
@@ -34,26 +44,24 @@ public class Main {
 
             if (A_bottomNo > B_mapNo) { // A > B인 경우 이동 방향을
                 // 90도 시계 방향으로 회전시킨다.
-                if (Direction.East == direction) direction=Direction.South;
-                else if (Direction.South == direction) direction=Direction.West;
-                else if (Direction.West == direction) direction=Direction.North;
-                else direction=Direction.East;
+                if (Direction.East == direction) direction= Direction.South;
+                else if (Direction.South == direction) direction= Direction.West;
+                else if (Direction.West == direction) direction= Direction.North;
+                else direction= Direction.East;
             } else { // A < B인 경우 이동 방향을
                 // 90도 반시계 방향으로 회전시킨다.
-                if (Direction.East == direction) direction=Direction.North;
-                else if (Direction.South == direction) direction=Direction.East;
-                else if (Direction.West == direction) direction=Direction.South;
-                else direction=Direction.West;
+                if (Direction.East == direction) direction= Direction.North;
+                else if (Direction.South == direction) direction= Direction.East;
+                else if (Direction.West == direction) direction= Direction.South;
+                else direction= Direction.West;
             }
         }
-
         int[][] planarFigure = new int[][] {
-                {0,2,0},
-                {4,1,3},
-                {0,5,0},
-                {0,6,0}
+            {0,2,0},
+            {4,1,3},
+            {0,5,0},
+            {0,6,0}
         };
-
         public int getNextRow() {
             if (Direction.North == direction) return currentRow-1;
             else if (Direction.South == direction) return currentRow+1;
@@ -67,6 +75,11 @@ public class Main {
         }
 
         public void go(Direction direction, int[][] map) {
+            if (! canDiceMoveable(map, this)) {
+                direction = getOpositeDirection();
+                this.direction = direction;
+            }
+
             if (Direction.East == direction) {
                 goEast();
                 currentCol++;
@@ -200,13 +213,14 @@ public class Main {
 
         // 문제 3번 더 읽으며 Dice 만들기 50분
 
-        System.out.println(dice);
-        dice.go(dice.direction, NM);
+        int sum = 0;
 
-        System.out.println(dice);
+        for (int i=0; i<K; i++) {
+            dice.go(dice.direction, NM);
+            sum += getScore(NM, dice);
+        }
 
-
-
+        System.out.println("sum : " + sum);
     }
 
     private static final Dice tempDice = new Dice();
@@ -239,51 +253,107 @@ public class Main {
         }
     }
 
+    public static class Node {
+
+        final int pR, pC, R, C;
+
+        Node(int parentR, int parentC, int R, int C) {
+            this.pR = parentR;
+            this.pC = parentC;
+            this.R = R;
+            this.C = C;
+        }
+
+        @Override
+        public String toString() {
+            return pR+","+pC+"[" + R + "," + C + "]";
+        }
+    }
+
+    public static boolean isOnMap(int[][] map, int r, int c) {
+        final int rowSize = map.length;
+        final int colSize = map[0].length;
+
+        return 0<=r && r<rowSize
+            && 0<=c && c<colSize;
+    }
+
     /**
      * @return 연속 이동 가능한 칸의 횟수
      */
-    public static int getContinousMovableCount(int[][] map, Dice _dice) {
-        Dice dice = copyToTempDice(_dice);
+    public static int getScore(int[][] map, Dice _dice) {
+        final int B = getMapNo(map, _dice);
+        boolean[][] visitMap = new boolean[map.length][map[0].length];
 
-/*
-주사위의 아랫면에 있는 정수 A와
-주사위가 있는 칸 (x, y)에 있는 정수 B를 비교해 이동 방향을 결정한다.
+        List<List<Node>> nodeListList = new ArrayList<>();
+        nodeListList.add(List.of(new Node(_dice.getRowOnMap(), _dice.getColOnMap(), _dice.getRowOnMap(), _dice.getColOnMap())));
 
-a = 3
-b = 1
-
-A > B인 경우 이동 방향을 90도 시계 방향으로 회전시킨다.
-A < B인 경우 이동 방향을 90도 반시계 방향으로 회전시킨다.
-A = B인 경우 이동 방향에 변화는 없다
- */
-
-        int count = 0;
-        int diceBottomNo;
-        int mapNo;
-        boolean canMoveable;
+        List<Node> tempNodeList;
+        int listCount = 0;
 
         while (true) {
-            canMoveable = canDiceMoveable(map, dice);
+            tempNodeList = nodeListList.get(listCount);
+            List<Node> newNodeList = new ArrayList<>();
 
-            if (! canMoveable) {
-                dice.changeToTheOpositeDirection();
+            for (Node parentNode : tempNodeList) {// 해당 노드에관해 동서남북 조건 찾음
+                if (
+                    isOnMap(map, parentNode.R,parentNode.C+1) // 동쪽이동위치가 맵으로 갈수 있는 영역
+                    && !visitMap[parentNode.R][parentNode.C+1] // 방문한적 없고
+                    && B == map[parentNode.R][parentNode.C+1] // 해당 위치의 숫자가 같다.
+                ) { // 동쪽
+                    visitMap[parentNode.R][parentNode.C+1] = true;
+                    newNodeList.add(new Node(parentNode.R, parentNode.C, parentNode.R, parentNode.C+1));
+
+                } else if (
+                    isOnMap(map, parentNode.R,parentNode.C-1) // 동쪽이동위치가 맵으로 갈수 있는 영역
+                    && !visitMap[parentNode.R][parentNode.C-1] // 방문한적 없고
+                    && B == map[parentNode.R][parentNode.C-1] // 해당 위치의 숫자가 같다.
+                ) { // 서쪽
+                    visitMap[parentNode.R][parentNode.C-1] = true;
+                    newNodeList.add(new Node(parentNode.R, parentNode.C, parentNode.R, parentNode.C-1));
+
+                } else if (
+                    isOnMap(map, parentNode.R+1,parentNode.C) // 동쪽이동위치가 맵으로 갈수 있는 영역
+                    && !visitMap[parentNode.R+1][parentNode.C] // 방문한적 없고
+                    && B == map[parentNode.R+1][parentNode.C] // 해당 위치의 숫자가 같다.
+                ) { // 남쪽
+                    visitMap[parentNode.R+1][parentNode.C] = true;
+                    newNodeList.add(new Node(parentNode.R, parentNode.C, parentNode.R+1, parentNode.C));
+
+                } else if (
+                    isOnMap(map, parentNode.R-1,parentNode.C) // 동쪽이동위치가 맵으로 갈수 있는 영역
+                    && !visitMap[parentNode.R-1][parentNode.C] // 방문한적 없고
+                    && B == map[parentNode.R-1][parentNode.C] // 해당 위치의 숫자가 같다.
+                ) { // 북쪽
+                    visitMap[parentNode.R-1][parentNode.C] = true;
+                    newNodeList.add(new Node(parentNode.R, parentNode.C, parentNode.R-1, parentNode.C));
+
+                }
             }
-            diceBottomNo = dice.getBottomNo();
-            mapNo = getMapNo(map, dice);
 
-            //            dice.
 
+            if (1 > newNodeList.size()) {
+                break;
+            }
+
+            nodeListList.add(newNodeList);
+            listCount++;
         }
-//
-//        return 0;
-//        return 0;
+
+        AtomicInteger count = new AtomicInteger();
+        nodeListList.forEach(nodeList -> {
+            System.out.println(nodeList.stream().map(Node::toString).collect(Collectors.joining(",")));
+            count.addAndGet(nodeList.size());
+        });
+
+        int score = count.get() * B;
+
+        System.out.println("count:" + count.get() + ", score=" + score);
+        return score;
     }
 
     public static int getMapNo(int[][] map, Dice dice) {
         return map[dice.currentRow-1][dice.currentCol-1];
-    }
-    public static int getMapNo(int[][] map, int row, int col) {
-        return map[row-1][col-1];
     }
 
     public static void printMap(int[][] map) {
