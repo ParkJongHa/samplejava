@@ -229,6 +229,8 @@ public class Main {
                     heightList.subList(i, i + L).forEach(height1 -> rampCandidateList.add(height1));
                 } else if ((i+1)<size && height.H==heightList.get(i+1).H) {
                     // 같으므로 그냥 넘어간다.
+                } else if ((i+1)==size) { // 마지막
+                    // 그냥 넘어간다.
                 } else {
 //                    System.out.println(
 //                            (i-1 < 0 ? "null" : heightList.get(i-1) ) + ", "
