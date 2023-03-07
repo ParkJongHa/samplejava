@@ -1,4 +1,4 @@
-package algorithm.baekjoon.demo02_ss.demo00003_63_23288_rolling_dice2;
+package algorithm.baekjoon.demo02_ss.demo00003_63_7_8_rolling_dice2;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -1,4 +1,4 @@
-package algorithm.baekjoon.demo02_ss.demo00002_60_19236_teenage_shark;
+package algorithm.baekjoon.demo02_ss.demo00002_60_2_4_teenage_shark;
 
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package algorithm.baekjoon.demo02_ss.demo00004_56_gerrymandering2;
+package algorithm.baekjoon.demo02_ss.demo00004_56_3_3_gerrymandering2;
 
 import java.util.Arrays;
 import java.util.Scanner;

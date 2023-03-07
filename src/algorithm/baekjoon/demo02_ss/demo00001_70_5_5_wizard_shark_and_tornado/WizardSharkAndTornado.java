@@ -1,4 +1,4 @@
-package algorithm.baekjoon.demo02_ss.demo00001_70_20057_wizard_shark_and_tornado;
+package algorithm.baekjoon.demo02_ss.demo00001_70_5_5_wizard_shark_and_tornado;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -6,54 +6,53 @@ import java.util.Scanner;
 
 /**
  * https://www.acmicpc.net/problem/20057
- * WizardSharkAndTornado
  */
-public class Q {
+public class WizardSharkAndTornado {
 
-    private Q q;
+    public static class Input {
+        final int N;
+        final int[][] A;
+        public Input(int N, int[][] A) {
+            this.N = N;
+            this.A = A;
+        }
+    }
 
-    public int outedSandAmount = 0;
-
-    int N;
-    int[][] A = null;
-
-    ArrayList<Point> pointList = new ArrayList<>();
-
-    int[][] remainSandMatrix;
+    public static int outedSandAmount = 0;
 
     /**
      * 인풋 잡는데 30 분 소요
      * @param args
      */
     public static void main(String[] args) {
-        Q q = new Q();
-        q.setInput();
-        if (null == q.A) return;
+        Input input = getInput();
 
-        q.setTornadoPointPathList();
+        if (null == input) return;
 
-        q.pointList.forEach(System.out::println);
+        ArrayList<Point> pointList = getTornadoPointPathList(input.N);
 
-        int[][] tempMatrix = new int[q.N][q.N];
+        pointList.forEach(System.out::println);
+
+        int[][] tempMatrix = new int[input.N][input.N];
         int[][] remainSandMatrix;
 
-        q.copyArray(q.A, tempMatrix);
+        copyArray(input.A, tempMatrix);
+
+        showMatrix(tempMatrix);
 
         Point beforePoint;
         Point nowPoint;
         Double[][] direction;
 
-        for (int i=1; i<q.pointList.size(); i++) {
-            beforePoint = q.pointList.get(i-1);
-            nowPoint = q.pointList.get(i);
+        for (int i=1; i<pointList.size(); i++) {
+            beforePoint = pointList.get(i-1);
+            nowPoint = pointList.get(i);
 
-            System.out.println("============================================================================================================");
-            System.out.println(i + " nowP:" +nowPoint + ", beforeP:" + beforePoint + "\ndirection");
-            direction = q.getDirection( beforePoint, nowPoint ); // east, west, north, south
+            System.out.println(i + " nowP:" +nowPoint + ", beforeP:" + beforePoint + " " + getDirectionName( beforePoint, nowPoint ));
+            direction =  getDirection( beforePoint, nowPoint );
             showMatrix(direction);
-            System.out.println("============================================================================================================");
 
-            remainSandMatrix = q.calcRemainSandMatrix( tempMatrix[nowPoint.x][nowPoint.y], direction );
+            remainSandMatrix = calcRemainSandMatrix( tempMatrix[nowPoint.x][nowPoint.y], direction );
             tempMatrix[nowPoint.x][nowPoint.y] = 0;
 
             System.out.println("tempMatrix");
@@ -62,21 +61,21 @@ public class Q {
             System.out.println("remainSandMatrix");
             showMatrix(remainSandMatrix);
 
-            int[][] movedMatrix = q.calcMoveRemainSandMatrix(q.N, nowPoint, remainSandMatrix);
+            int[][] movedMatrix = calcMoveRemainSandMatrix(input.N, nowPoint, remainSandMatrix);
 
             System.out.println("movedMatrix");
             showMatrix(movedMatrix);
 
-            q.plusArray(tempMatrix, movedMatrix, tempMatrix);
+            plusArray(tempMatrix, movedMatrix, tempMatrix);
             System.out.println("plusMatrix");
             showMatrix(tempMatrix);
             System.out.println("============================================================================================================");
         }
 
-        System.out.println("outedSandAmount:" + q.outedSandAmount);
+        System.out.println("outedSandAmount:" + outedSandAmount);
     }
 
-    void copyArray(int[][] source, int[][] target) {
+    static void copyArray(int[][] source, int[][] target) {
         for (int i=0; i<source.length; i++) {
             for (int j=0; j<source.length; j++) {
                 target[i][j] = source[i][j];
@@ -84,7 +83,7 @@ public class Q {
         }
     }
 
-    void plusArray(int[][] source1, int[][] source2, int[][] calcingArr) {
+    static void plusArray(int[][] source1, int[][] source2, int[][] calcingArr) {
         for (int i=0; i<source1.length; i++) {
             for (int j=0; j<source1.length; j++) {
                 calcingArr[i][j] = source1[i][j] + source2[i][j];
@@ -92,7 +91,7 @@ public class Q {
         }
     }
 
-    int[][] calcMoveRemainSandMatrix(
+    static int[][] calcMoveRemainSandMatrix(
             int matrixSize,
             Point remainSandMatrixPoint,
             int[][] remainSandMatrix
@@ -109,9 +108,9 @@ public class Q {
                 newY = j + remainSandMatrixPoint.y - remainSandCenter;//
 
                 if (newX<0 || matrixSize<=newX) {
-                    outedSandAmount += remainSandMatrix[i][j];
+                    outedSandAmount = outedSandAmount + remainSandMatrix[i][j];
                 } else if (newY<0 || matrixSize<=newY) {
-                    outedSandAmount += remainSandMatrix[i][j];
+                    outedSandAmount = outedSandAmount + remainSandMatrix[i][j];
                 } else {
                     baseMatrix[newX][newY] = remainSandMatrix[i][j]; // 1+new Random().nextInt(8); //
                 }
@@ -122,28 +121,28 @@ public class Q {
         return baseMatrix;
     }
 
-    final Double[][] West = new Double[][] {
+    static final Double[][] W = new Double[][] {
             {null, null, 0.02, null, null},
             {null, 0.1, 0.07, 0.01, null},
             {0.05, 0.75, null, null, null},
             {null, 0.1, 0.07, 0.01, null},
             {null, null, 0.02, null, null},
     };
-    final Double[][] East = new Double[][] {
+    static final Double[][] E = new Double[][] {
             {null, null, 0.02, null, null},
             {null, 0.01, 0.07, 0.1, null},
             {null, null, null, 0.75, 0.05},
             {null, 0.01, 0.07, 0.1, null},
             {null, null, 0.02, null, null},
     };
-    final Double[][] North = new Double[][] {
+    static final Double[][] N = new Double[][] {
             {null, null, 0.05, null, null},
             {null, 0.1,  0.75, 0.1,  null},
             {0.02, 0.07, null, 0.07, 0.02},
             {null, 0.01, null, 0.01, null},
             {null, null, null, null, null},
     };
-    final Double[][] South = new Double[][] {
+    static final Double[][] S = new Double[][] {
             {null, null, null, null, null},
             {null, 0.01, null, 0.01, null},
             {0.02, 0.07, null, 0.07, 0.02},
@@ -151,27 +150,27 @@ public class Q {
             {null, null, 0.05, null, null},
     };
 
-    public void setInput() {
+    public static Input getInput() {
         Scanner scanner = new Scanner(System.in);
         String line = scanner.nextLine();
-        N = Integer.parseInt(line);
+        int n = Integer.parseInt(line);
 
-        if (N < 3 || 499 < N) {
+        if (n < 3 || 499 < n) {
             System.out.println("3 <= n <= 499");
-            return;
+            return null;
         }
 
-        if (N % 2 == 0) {
+        if (n % 2 == 0) {
             System.out.println("n must be odd number");
-            return;
+            return null;
         }
 
-        A= new int[N][N];
+        int A[][] = new int[n][n];
 
         String inputLine;
         String[] splittedInputLine;
 
-        for (int i=0; i<N; i++) {
+        for (int i=0; i<n; i++) {
             inputLine = scanner.nextLine();
             splittedInputLine = inputLine.split(" ");
 
@@ -179,24 +178,25 @@ public class Q {
                 int Arc = Integer.parseInt(splittedInputLine[j].trim());
                 if (Arc < 0 || 1000 < Arc) {
                     System.out.println("0 <= A[r][c] <= 1000");
-                    return;
+                    return null;
                 }
                 A[i][j] = Arc;
             }
         }
 
-        if (0 != A[(N/2)][(N/2)]) {
+        if (0 != A[(n/2)][(n/2)]) {
             System.out.println("가운데 칸의 모래양은 0 유효성 체크");
-            return;
+            return null;
         }
 
-        System.out.println("input matrix (N=" + N + ")");
-        showMatrix(A);
         System.out.println("==========================================");
+        showMatrix(A);
+
+        return new Input(n, A);
     }
 
-    public int[][] calcRemainSandMatrix(int sandAmount, Double[][] splitRatioMatrix) {
-        remainSandMatrix = new int[splitRatioMatrix.length][splitRatioMatrix.length];
+    public static int[][] calcRemainSandMatrix(int sandAmount, Double[][] splitRatioMatrix) {
+        int[][] remainSandMatrix = new int[splitRatioMatrix.length][splitRatioMatrix.length];
         Point remainSandPoint = null;
         int remainSandSum = 0;
         int sand;
@@ -222,13 +222,17 @@ public class Q {
 
     /**
      * 이동 횟수의 규칙 찾기 (2시간 소요)
+     * @param n nxn 메트릭스의 가운데에서 출발 하여 반시계 방향으로 이동시
+     * @return 포지션
      */
-    public void setTornadoPointPathList() {
-        int moveCount = N * N - 1;
+    public static ArrayList<Point> getTornadoPointPathList(int n) {
+        int moveCount = n * n - 1;
 
-        int posX = N/2;
-        int posY = N/2;
-        pointList.add(new Point(posX, posY));
+        ArrayList<Point> tornadoPathPointList = new ArrayList<>();
+
+        int posX = n/2;
+        int posY = n/2;
+        tornadoPathPointList.add(new Point(posX, posY));
 
         int accumMoveCount = 0;
         boolean isXDirection = false;
@@ -240,7 +244,7 @@ public class Q {
         while (true) {
             for (int i=0; i<range; i++) {
                 if (moveCount == accumMoveCount) {
-                    return;
+                    return tornadoPathPointList;
                 }
 
                 if (isXDirection) {
@@ -251,7 +255,7 @@ public class Q {
                     else posY = posY - 1;
                 }
 
-                pointList.add(new Point(posX, posY));
+                tornadoPathPointList.add(new Point(posX, posY));
                 accumMoveCount++;
             }
             rangeForEndCount++;
@@ -267,11 +271,18 @@ public class Q {
         }
     }
 
-    public Double[][] getDirection(Point beforePoint, Point afterPoint) {
-        if (beforePoint.x == afterPoint.x && beforePoint.y > afterPoint.y) return West;
-        else if (beforePoint.x == afterPoint.x && beforePoint.y < afterPoint.y) return East;
-        else if (beforePoint.x > afterPoint.x && beforePoint.y == afterPoint.y) return North;
-        else return South;
+    public static Double[][] getDirection(Point beforePoint, Point afterPoint) {
+        if (beforePoint.x == afterPoint.x && beforePoint.y > afterPoint.y) return W;
+        else if (beforePoint.x == afterPoint.x && beforePoint.y < afterPoint.y) return E;
+        else if (beforePoint.x > afterPoint.x && beforePoint.y == afterPoint.y) return N;
+        else return S;
+    }
+
+    public static String getDirectionName(Point beforePoint, Point afterPoint) {
+        if (beforePoint.x == afterPoint.x && beforePoint.y > afterPoint.y) return "W";
+        else if (beforePoint.x == afterPoint.x && beforePoint.y < afterPoint.y) return "E";
+        else if (beforePoint.x > afterPoint.x && beforePoint.y == afterPoint.y) return "N";
+        else return "S";
     }
 
 

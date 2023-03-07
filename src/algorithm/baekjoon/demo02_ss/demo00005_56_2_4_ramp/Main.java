@@ -1,4 +1,4 @@
-package algorithm.baekjoon.demo02_ss.demo00005_56_ramp;
+package algorithm.baekjoon.demo02_ss.demo00005_56_2_4_ramp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,12 @@ public class Main {
         Vertical;
     }
 
+    public enum Ramp {
+        Group,
+        Up,
+        Down,
+    }
+
     public static class Height {
         final int R;
         final int C;
@@ -30,11 +36,16 @@ public class Main {
             this.D = direction;
         }
 
-        String ramp = " ";
+        Ramp ramp = null;
+
+        public Height setRamp(Ramp ramp) {
+            this.ramp = ramp;
+            return this;
+        }
 
         @Override
         public String toString() {
-            return H + "(" + R + "," + C + ")" + D.name().charAt(0) + ramp;
+            return H + "(" + R + "," + C + ")" + D.name().charAt(0) + (ramp==null ? " " : ramp.name().charAt(0));
         }
     }
 
@@ -131,10 +142,11 @@ public class Main {
         int wayCount = 0;
 
         for (List<Height> heightList : pathList) {
-            if (isAllSameHeight(heightList, null) && !hasRamp(heightList)) {
-                wayCount++; // 모두 같은 높이 && // 경사로 없음
-                System.out.println("길 - " + heightList.stream().map(Height::toString).collect(Collectors.joining(" - ")));
-            } else if (setRampAndGetResult(heightList, L)) {
+//            if (isAllSameHeight(heightList, null) && !hasRamp(heightList)) {
+//                wayCount++; // 모두 같은 높이 && // 경사로 없음
+//                System.out.println("길 - " + heightList.stream().map(Height::toString).collect(Collectors.joining(" - ")));
+//            } else
+            if (setRampAndGetResult(heightList, L)) {
                 wayCount++;// 경사로를 놓을수 있음
                 System.out.println("길 - " + heightList.stream().map(Height::toString).collect(Collectors.joining(" - ")));
             }
@@ -161,12 +173,13 @@ public class Main {
     public static boolean hasRamp(List<Height> heightList) {
         int rampCount = (int) heightList
                 .stream()
-                .filter(height -> !height.ramp.trim().equals(""))// 경사로 있음
+                .filter(height -> height.ramp==Ramp.Up || height.ramp == Ramp.Down)// 경사로 있음
                 .count();
 
         return 0 < rampCount;
     }
 
+    /*
     // 길이 되려면 경사로를 설치 해야만한다 높이가 다른 리스트가 들어온다
     public static boolean setRampAndGetResult(List<Height> heightList, final int L) {
         if ("1(3,0)H ,1(3,1)H ,1(3,2)H ,2(3,3)H ,2(3,4)H ,2(3,5)H ".equals(heightList.stream().map(Height::toString).collect(Collectors.joining(",")))) {
@@ -232,6 +245,49 @@ public class Main {
         }
 
         return true; // true 라면 경사로를 설치할 수 있다.
+    }
+//*/
+    public static boolean setRampAndGetResult(List<Height> heightList, final int L) {
+        final List<Height> rampCandidateList = new ArrayList<>(); // 경사로가 설치되어야 할 리스트
+        final int size = heightList.size();
+        Height height;
+        Height nextHeight;
+        int diff;
+
+        // 2 2 2 3 2 3
+        for (int i=0; i<(size-1); i++) {
+            height = heightList.get(i);
+            nextHeight = heightList.get(i+1);
+            diff = height.H - nextHeight.H;
+
+            if (1 < Math.abs(diff)) {
+                return false;
+            } else if (diff==1) { // 오르막
+                if ((i+L)>=size || heightList.subList(i, i+L).stream().anyMatch(height1 -> Ramp.Up == height1.ramp || Ramp.Down == height1.ramp)) return false; // 이미 설치된게 있음
+                if (! isAllSameHeight(heightList.subList(i, i+L), null)) return false; // 모두 같은 높이가 아니다
+                heightList.subList(i, i+L).forEach(height1 -> rampCandidateList.add(copy(height1.setRamp(Ramp.Up))));
+            } else if (diff==-1) { // 내리막
+                if ((i+L+1)>=size || heightList.subList(i+1, i+L+1).stream().anyMatch(height1 -> Ramp.Up==height1.ramp || Ramp.Down==height1.ramp)) return false; // 이미 설치된게 있음
+                if (! isAllSameHeight(heightList.subList(i+1, i+L+1), null)) return false; // 모두 같은 높이가 아니다
+                heightList.subList(i+1, i+L+1).forEach(height1 -> rampCandidateList.add(copy(height1.setRamp(Ramp.Down))));
+            }
+        }
+
+        heightList.forEach(oHeight -> {
+            Height tempHeight = rampCandidateList
+                    .stream()
+                    .filter(tHeight -> tHeight.R==oHeight.R && tHeight.C==oHeight.C)
+                    .findAny()
+                    .orElse(null);
+
+            if (null != tempHeight) oHeight.ramp = tempHeight.ramp;
+        });
+
+        return true; // true 라면 경사로를 설치할 수 있다.
+    }
+
+    public static Height copy(Height height) {
+        return new Height(height.R,height.C, height.H, height.D);
     }
 
     public static boolean[][] copyRampMap(boolean[][] rampMap) {
