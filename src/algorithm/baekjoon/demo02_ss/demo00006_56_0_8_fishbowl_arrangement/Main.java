@@ -21,11 +21,15 @@ public class Main {
             this.col = _col;
             return this;
         }
+
+        public FishBowl setRow(int _row) {
+            this.row = _row;
+            return this;
+        }
         public FishBowl(int fishCount) {
             this.fishCount = fishCount;
         }
 
-        public FishBowl upFishBowl = null;
         @Override
         public String toString() {
             return "[" + row + "," + col + "]" + fishCount + " ";
@@ -60,6 +64,7 @@ public class Main {
         fishBowlList.forEach(fishBowl -> {if (fishBowl.fishCount == minFishCount) fishBowl.fishCount++;});
         print();
 
+        /*
         // 이제 어항을 쌓는다. 먼저, 가장 왼쪽에 있는 어항을 그 어항의 오른쪽에 있는 어항의 위에 올려 놓아 <그림 3>이 된다.
         List<FishBowl> hoveringBowlList = fishBowlList.stream().filter(fishBowl -> fishBowl.upFishBowl!=null).toList();
         if (0==hoveringBowlList.size()) {
@@ -102,8 +107,96 @@ public class Main {
         }
 
         print();
+        //*/
 
+        hoveringTask();
+
+        // 물고기 수 조절
+
+        flattening();
     }
+
+    public static void hoveringTask() {
+        while (true) {
+            // 이제 어항을 쌓는다. 먼저, 가장 왼쪽에 있는 어항을 그 어항의 오른쪽에 있는 어항의 위에 올려 놓아 <그림 3>이 된다.
+            if (0==fishBowlList.stream().filter(fishBowl -> fishBowl.row>0).toList().size()) {
+                fishBowlList.get(0).row++;
+                fishBowlList.stream().filter(fishBowl -> fishBowl.row==0).toList().forEach(fishBowl -> fishBowl.col--);
+            } else if ( isRotatable(fishBowlList) ) { // 공중부양 시키고 회전 가능하면
+                // 이제, 2개 이상 쌓여있는 어항을 모두 공중 부양시킨 다음, 전체를 시계방향으로 90도 회전시킨다. 이후 공중 부양시킨 어항을 바닥에 있는 어항의 위에 올려놓는다.
+                Map<Integer, List<FishBowl>> fishBowlListByColMap = fishBowlList.stream().collect(Collectors.groupingByConcurrent(fishBowl -> fishBowl.col));
+
+                int hoveringTargetWidth = 0; // 공중부양될 어항의 길이
+                int tempNo;
+
+                for(Integer col : fishBowlListByColMap.keySet().stream().toList()) {
+                    if (2<=fishBowlListByColMap.get(col).size()) {
+                        hoveringTargetWidth++;
+                    }
+                }
+
+                print();
+
+                System.out.println("hoveringTargetWidth: " + hoveringTargetWidth);
+
+                for (Integer col : fishBowlListByColMap.keySet().stream().toList()) {
+                    if (2<=fishBowlListByColMap.get(col).size()) { // // 이제, 2개 이상 쌓여있는
+                        for (FishBowl fishBowl : fishBowlListByColMap.get(col)) {
+                            fishBowl.col = hoveringTargetWidth - fishBowl.col; //전체를 시계방향으로 90도 회전시킨다.
+
+                            tempNo = fishBowl.row;
+                            fishBowl.row = fishBowl.col;
+                            fishBowl.col = tempNo;
+                        }
+                    }
+                }
+
+                for (FishBowl aFishBowl : fishBowlList.stream().filter(fishBowl -> fishBowl.row==0).toList()) {
+                    aFishBowl.col = aFishBowl.col - hoveringTargetWidth;
+                }
+            } else {
+                break;
+            }
+            print();
+        }
+
+        print();
+    }
+
+    public static void flattening() {
+        Map<Integer, List<FishBowl>> fishBowlListByColMap = fishBowlList.stream().collect(Collectors.groupingByConcurrent(fishBowl -> fishBowl.col));
+
+        int maxCol = Integer.MIN_VALUE;
+        for (Integer integer : fishBowlListByColMap.keySet().stream().toList()) {
+            maxCol = Math.max(integer, maxCol);
+        }
+
+        List<FishBowl> newFishBowlList = new ArrayList<>();
+        int newCol = 0;
+
+        for (int i=0; i<=maxCol; i++) {
+            List<FishBowl> fishBowlList = fishBowlListByColMap.get(i);
+
+            int maxRow = Integer.MIN_VALUE;
+            for (Integer integer : fishBowlListByColMap.keySet().stream().toList()) {
+                maxRow = Math.max(integer, maxRow);
+            }
+
+            for (int j=0; j<=maxRow; j++) {
+                int finalJ = j;
+                FishBowl newFishBowl = fishBowlList.stream().filter(fishBowl -> fishBowl.row == finalJ).findFirst().orElse(null);
+
+                if (null != newFishBowl) {
+                    newFishBowlList.add( newFishBowl.setRow(0).setCol(newCol) );
+                    newCol++;
+                }
+            }
+        }
+
+        fishBowlList = newFishBowlList;
+        print();
+    }
+
 
     public static boolean isRotatable(List<FishBowl>  fishBowlList) {
         Map<Integer, List<FishBowl>> fishBowlListByColMap = fishBowlList.stream().collect(Collectors.groupingByConcurrent(fishBowl -> fishBowl.col));
